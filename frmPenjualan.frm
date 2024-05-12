@@ -97,12 +97,12 @@ On Error Resume Next
         Dim jumlah As Integer
         jumlah = tbTransaksi.List(i, 5)
         'Cari baris pertama yang mengandung nilai nama barang yang diinputkan
-        Dim firstRow As Integer
+        Dim firstRow As Long
         firstRow = Sheets("DATABARANG").Range("b:b").Find(kodeBarang, LookIn:=xlValues, LookAt:=xlWhole).Row
         'Cari baris terakhir yang mengandung nilai nama barang yang diinputkan
-        Dim lastRow As Integer
-        'lastRow = Sheets("DATABARANG").Range("b:b").Find(kodeBarang, LookIn:=xlValues, SearchDirection:=xlPrevious).Row
-        lastRow = Sheets("DATABARANG").Range("b:b").Find(kodeBarang, LookIn:=xlValues, LookAt:=xlWhole).Row
+        Dim lastRow As Long
+        lastRow = Sheets("DATABARANG").Range("b:b").Find(kodeBarang, LookIn:=xlValues, SearchDirection:=xlPrevious).Row
+        'lastRow = Sheets("DATABARANG").Range("b:b").Find(kodeBarang, LookIn:=xlValues, LookAt:=xlWhole).Row
         'Ambil nilai stok keluar dan sisa stok dari sel aktif
         Dim stokKeluar As Integer
         stokKeluar = Sheets("DATABARANG").Range("L" & firstRow).Value
@@ -115,9 +115,16 @@ On Error Resume Next
         Dim newSisaStok As Integer
         newSisaStok = stokAwal + stokSudahMasuk - newStokKeluar
         'Update nilai stok keluar dan sisa stok di lembar kerja
-        Sheets("DATABARANG").Range("L" & firstRow - 1).Value = newStokKeluar
-        Sheets("DATABARANG").Range("M" & lastRow - 1).Value = newSisaStok
+        Sheets("DATABARANG").Range("L" & firstRow).Value = newStokKeluar
+        Sheets("DATABARANG").Range("M" & lastRow).Value = newSisaStok
+                        
     Next i
+        lastRowA = Sheets("DATABARANG").Cells(Rows.Count, 1).End(xlUp).Row
+        lastRowL = Sheets("DATABARANG").Cells(Rows.Count, 12).End(xlUp).Row
+        lastRowM = Sheets("DATABARANG").Cells(Rows.Count, 13).End(xlUp).Row
+        Sheets("DATABARANG").Range("L" & lastRowA + 1 & ":L" & lastRowL).ClearContents
+        Sheets("DATABARANG").Range("M" & lastRowA + 1 & ":M" & lastRowM).ClearContents
+
 End Sub
 Sub tampil()
 On Error Resume Next
@@ -161,10 +168,13 @@ Else
         Sheets("NOTA").Range("c6").Value = Me.txtCustomer.Text
     End If
 
-    Sheets("SEMENTARA").Range("a2:k" & akhir3).Copy
+    
+    Sheets("SEMENTARA").Range("a2:L" & akhir3).Copy
     Sheets("REKAP").Range("a" & akhir1 + 1).PasteSpecial xlPasteValues
     
     Sheets("REKAP").Range("k2:k" & akhir1 + 1).NumberFormat = "0"
+    Sheets("REKAP").Range("L" & akhir1 + 1).Value = "COMPLETED"
+    
     Application.CutCopyMode = False
     Sheets("NOTA").Range("a8:i100").Borders.LineStyle = xlNone
     
@@ -285,11 +295,29 @@ For Each cell In selection
 Next cell
 End Sub
 Private Sub cmdPending_Click()
-Dim pendingId As Integer
-akhir = Sheets("NOTA").Cells(Rows.Count, 1).End(xlUp).Row
-akhir2 = Sheets("PENDING_DETAIL").Cells(Rows.Count, 1).End(xlUp).Row
-Sheets("NOTA").Range("a8:J" & akhir + 1).Copy Destination:=Sheets("PENDING_DETAIL").Range("a" & akhir2 + 1)
-kosongkan
+akhir = Sheets("DATABARANG").Cells(Rows.Count, 1).End(xlUp).Row
+akhir1 = Sheets("REKAP").Cells(Rows.Count, 1).End(xlUp).Row
+akhir2 = Sheets("NOTA").Cells(Rows.Count, 1).End(xlUp).Row
+akhir3 = Sheets("SEMENTARA").Cells(Rows.Count, 1).End(xlUp).Row
+If Sheets("NOTA").Range("c8").Value = "" Then
+    MsgBox "Tidak ada transaksi untuk diselesaikan", vbOKOnly + vbCritical, "INFO"
+    Exit Sub
+Else
+    Sheets("SEMENTARA").Range("a2:L" & akhir3).Copy
+    Sheets("REKAP").Range("a" & akhir1 + 1).PasteSpecial xlPasteValues
+    
+    Sheets("REKAP").Range("k2:k" & akhir1 + 1).NumberFormat = "0"
+    Sheets("REKAP").Range("L" & akhir1 + 1).Value = "PENDING"
+    
+    Application.CutCopyMode = False
+    Sheets("SEMENTARA").Range("a2:k" & akhir3).ClearContents
+    datane
+    kosongkan
+    cetakPenjualan
+    createNoNota
+    End If
+Sheets("DATABARANG").AutoFilterMode = False
+ThisWorkbook.Save
 End Sub
 Private Sub cmdProses_Click()
 If Sheets("NOTA").Range("A8").Value = "" Then
