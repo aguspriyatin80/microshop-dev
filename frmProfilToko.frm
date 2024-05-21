@@ -15,6 +15,12 @@ Attribute VB_PredeclaredId = True
 Attribute VB_Exposed = False
 Dim uploadImage As Boolean
 Dim lokasi_foto As String
+
+Function getPath(FullPath As String, Optional Delim As String = "\") As String
+    Dim a: a = Split(FullPath & "$", Delim)
+    getPath = Join(Filter(a, a(UBound(a)), False), Delim)
+End Function
+
 Sub simpan()
 Dim lokasi_foto As String
 On Error Resume Next
@@ -41,6 +47,7 @@ If uploadImage Then
         End With
         Sheets("PROFIL_TOKO").Range("C4").Value = lokasi_foto
         DASHBOARD2.logoToko.Picture = LoadPicture(Sheets("PROFIL_TOKO").Range("C4").Value)
+        
         Me.imgLogoToko.Picture = LoadPicture(Sheets("PROFIL_TOKO").Range("C4").Value)
         Set ws = Sheets("NOTA")
         DeleteImage
@@ -55,7 +62,7 @@ Else
         Me.imgLogoToko.Picture = LoadPicture(Sheets("PROFIL_TOKO").Range("C4").Value)
 End If
 ThisWorkbook.Save
-MsgBox "Profile updated successfully!"
+MsgBox "Profile updated successfully!", vbOKOnly, APP_TITLE
 End Sub
 Sub DeleteImage()
 Dim pic As Picture
@@ -68,15 +75,23 @@ Next pic
 End Sub
 Private Sub cmdRemoveLogo_Click()
 uploadImage = False
-imgLogoToko.Picture = LoadPicture(vbNullString)
-lokasi_foto = ""
 DeleteImage
+lokasi_foto = ThisWorkbook.Path & "\noimage.jpg"
+'lokasi_foto = ""
+imgLogoToko.Picture = LoadPicture(lokasi_foto)
 Sheets("PROFIL_TOKO").Range("C4").Value = lokasi_foto
+DASHBOARD2.logoToko.Picture = LoadPicture(lokasi_foto)
+Me.Repaint
 End Sub
 Private Sub cmdSimpan_Click()
-MsgBox "Maaf, tidak bisa update profil toko!"
+'MsgBox "Maaf, tidak bisa update profil toko!"
+If Application.FileDialog(msoFileDialogFilePicker).SelectedItems.Count = 0 Then
+    MsgBox "Anda belum menambahkan logo, klik ""Upload Image"" ", vbOKOnly, APP_TITLE
+Else
+simpan
+End If
 End Sub
-Private Sub cmdUpload_Click()
+Sub cmdUpload_Click()
 uploadImage = True
 With Application.FileDialog(msoFileDialogFilePicker)
     .AllowMultiSelect = False
@@ -86,13 +101,52 @@ imgLogoToko.Picture = LoadPicture(.SelectedItems(1))
 lokasi_foto = .SelectedItems(1)
 End If
 End With
+Me.Repaint
 End Sub
+
+Private Sub imgLogoToko_BeforeDragOver(ByVal Cancel As MSForms.ReturnBoolean, ByVal Data As MSForms.DataObject, ByVal X As Single, ByVal Y As Single, ByVal DragState As MSForms.fmDragState, ByVal Effect As MSForms.ReturnEffect, ByVal Shift As Integer)
+
+End Sub
+
 Private Sub imgLogoToko_Click()
-MsgBox Application.FileDialog(msoFileDialogFilePicker).SelectedItems.Count
+'Dim ada As Integer
+'ada = Application.FileDialog(msoFileDialogFilePicker).SelectedItems.Count
+'If ada = 0 Then
+'    MsgBox "Klik ""Upload Image"" untuk menambahkan logo"
+'Else
+'    MsgBox "Klik ""Remove Image"" untuk menghapus logo"
+'End If
+'MsgBox Application.FileDialog(msoFileDialogFilePicker).Show
+'MsgBox Application.FileDialog(msoFileDialogFilePicker).SelectedItems.Count
+
 End Sub
 Private Sub UserForm_Initialize()
-Me.txtNamaToko.Text = DASHBOARD2.lblNamaToko.Caption
-Me.txtAlamat1.Text = DASHBOARD2.lblAlamat1.Caption
-Me.txtAlamat2.Text = DASHBOARD2.lblAlamat2.Caption
-Me.imgLogoToko.Picture = LoadPicture(Sheets("PROFIL_TOKO").Range("C4").Value)
+'Dim myPath As String
+Dim NamaToko As String, Alamat1 As String, Alamat2 As String, PathLogo As String
+
+NamaToko = Sheets("PROFIL_TOKO").Range("C1")
+Alamat1 = Sheets("PROFIL_TOKO").Range("C2")
+Alamat2 = Sheets("PROFIL_TOKO").Range("C3")
+PathLogo = Sheets("PROFIL_TOKO").Range("C4")
+yourPath = getPath(PathLogo)
+'MsgBox yourPath
+Me.txtNamaToko.Text = NamaToko
+Me.txtAlamat1.Text = Alamat1
+Me.txtAlamat2.Text = Alamat2
+
+'myPath = Trim(UCase(ThisWorkbook.Path & "\TRI_PUTRA2.jpg"))
+
+If yourPath <> ThisWorkbook.Path Then
+    PathLogo = ThisWorkbook.Path & "\noimage.jpg"
+    'PathLogo = ""
+    MsgBox "Pastikan file logo berada di folder utama aplikasi ini, " & vbCrLf & vbCrLf & "agar logo selalu tampil ketika aplikasi dibuka.", vbOKOnly, APP_TITLE
+Else
+    PathLogo = PathLogo
+End If
+Me.imgLogoToko.Picture = LoadPicture(PathLogo)
+'On Error GoTo salah
+'salah:
+
+'MsgBox Err.Description
+'MsgBox "Test"
 End Sub
